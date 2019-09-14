@@ -1,5 +1,4 @@
-﻿using System;
-using System.Xml.Linq;
+using System;
 using BepInEx;
 using BepInEx.Configuration;
 using System.Collections.Generic;
@@ -51,7 +50,6 @@ namespace GrabRave
 
         internal static new ManualLogSource Logger;
 
-        ChaControl character;
 
         private void Start()
         {
@@ -65,8 +63,11 @@ namespace GrabRave
 
         private void LateUpdate()
         {
-            if (character == null)
-                character = FindObjectOfType<ChaControl>();
+            // Check if maker is loaded yet
+            if (!CharaCustom.CustomBase.IsInstance()) return;
+
+            var character = CharaCustom.CustomBase.Instance.chaCtrl;
+            if (character == null) return;
 
             currentMousePosition = Input.mousePosition;
             deltaMousePosition = currentMousePosition - lastMousePosition;
@@ -80,9 +81,9 @@ namespace GrabRave
             if (Input.GetKey(keyGrabHeadPYR.Value.ToLower()))
             {
                 if (Input.GetMouseButton(0))
-                    GrabEmByThePussy(0);
+                    GrabEmByThePussy(0, character);
                 else if (Input.GetMouseButton(1))
-                    GrabEmByThePussy(1);
+                    GrabEmByThePussy(1, character);
 
                 if (Input.GetMouseButtonDown(2))
                 {
@@ -106,33 +107,30 @@ namespace GrabRave
                 Logger.LogMessage(String.Format("GrabRave Mode: {0}", names[currentIndex]));
             }
 
-            if (character != null)
+            for (int i = 0; i < posMate.Length; i++)
             {
-                for (int i = 0; i < posMate.Length; i++)
+                for (int a = 0; a < targetArray[i].Length; a++)
                 {
-                    for (int a = 0; a < targetArray[i].Length; a++)
-                    {
-                        string targetString = targetArray[i][a];
-                        Transform thatTransform = character.gameObject.transform.Find(targetString);
-                        if (posMate[i] == Vector3.zero)
-                            posMate[i] = thatTransform.localEulerAngles;
-                        else
-                            thatTransform.localEulerAngles = posMate[i];
-                    }
+                    string targetString = targetArray[i][a];
+                    Transform thatTransform = character.gameObject.transform.Find(targetString);
+                    if (posMate[i] == Vector3.zero)
+                        posMate[i] = thatTransform.localEulerAngles;
+                    else
+                        thatTransform.localEulerAngles = posMate[i];
                 }
             }
 
             lastMousePosition = currentMousePosition;
         }
 
-        private void GrabEmByThePussy(int shit)
+        private void GrabEmByThePussy(int shit, ChaControl chara)
         {
-            if (character != null)
+            if (chara != null)
             {
                 for (int i = 0; i < targetArray[currentIndex].Length; i++)
                 {
                     string targetString = targetArray[currentIndex][i];
-                    Transform thatTransform = character.gameObject.transform.Find(targetString);
+                    Transform thatTransform = chara.gameObject.transform.Find(targetString);
 
                     if (thatTransform != null)
                     {
